@@ -1,7 +1,7 @@
 package winrt
 
-type HSTRING__ struct {
+type HSTRING struct {
 	unused int32
 }
 
-type HSTRING *HSTRING__
+//type HSTRING *HSTRING__

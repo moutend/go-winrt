@@ -2,6 +2,7 @@
 package winrt
 
 import (
+	"reflect"
 	"syscall"
 	"unsafe"
 
@@ -13,6 +14,7 @@ var (
 
 	procRoInitialize, _        = modcombase.FindProc("RoInitialize")
 	procRoUninitialize, _      = modcombase.FindProc("RoUninitialize")
+	procRoActivateInstance, _  = modcombase.FindProc("RoActivateInstance")
 	procWindowsCreateString, _ = modcombase.FindProc("WindowsCreateString")
 	procWindowsDeleteString, _ = modcombase.FindProc("WindowsDeleteString")
 )
@@ -29,16 +31,25 @@ func RoUninitialize() {
 	_, _, _ = procRoUninitialize.Call()
 }
 
-func WindowsCreateString(input uintptr, length uint32, output HSTRING) (err error) {
-	hr, _, _ := procWindowsCreateString.Call(input, uintptr(length), uintptr(unsafe.Pointer(output)))
+func RoActivateInstance(hstr *HSTRING, ins interface{}) (err error) {
+	insValue := reflect.ValueOf(ins).Elem()
+	hr, _, _ := procRoActivateInstance.Call(uintptr(unsafe.Pointer(hstr)), insValue.Addr().Pointer())
 	if hr != 0 {
 		err = ole.NewError(hr)
 	}
 	return
 }
 
-func WindowsDeleteString(input HSTRING) (err error) {
-	hr, _, _ := procWindowsDeleteString.Call(uintptr(unsafe.Pointer(input)))
+func WindowsCreateString(input *uint16, length uint32, hstr **HSTRING) (err error) {
+	hr, _, _ := procWindowsCreateString.Call(uintptr(unsafe.Pointer(input)), uintptr(length), uintptr(unsafe.Pointer(hstr)))
+	if hr != 0 {
+		err = ole.NewError(hr)
+	}
+	return
+}
+
+func WindowsDeleteString(hstr **HSTRING) (err error) {
+	hr, _, _ := procWindowsDeleteString.Call(uintptr(unsafe.Pointer(hstr)))
 	if hr != 0 {
 		err = ole.NewError(hr)
 	}
